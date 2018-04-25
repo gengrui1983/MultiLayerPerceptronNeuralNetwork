@@ -8,7 +8,7 @@ class MLP:
     """
     """
 
-    def __init__(self, layers, dropouts, activation='tanh'):
+    def __init__(self, layers, dropouts, activation='tanh', norm=None, update_type=None):
         """
         :param layers: A list containing the number of units in each layer.
         Should be at least two values
@@ -25,6 +25,7 @@ class MLP:
         self.activation = activation
         for i in range(len(layers) - 1):
             self.layers.append(HiddenLayer(layers[i], layers[i + 1], activation=activation,
+                                           norm=norm, update_type=update_type,
                                            dropout=dropouts[i],
                                            is_last=(i == len(layers) - 2)))
 
@@ -46,11 +47,11 @@ class MLP:
         for i in reversed(range(len(self.layers))):
             delta = self.layers[i].backward(
                 delta,
-                self.layers[i-1] if i > 0 else None
+                self.layers[i - 1] if i > 0 else None
             )
 
             if i != 0 and self.layers[i].dropout_p != -1:
-                delta *= self.dropout_masks[i-1]
+                delta *= self.dropout_masks[i - 1]
 
     def __softmax(self, x):
         exps = np.exp(x - np.max(x, axis=1, keepdims=True))
@@ -103,11 +104,20 @@ class MLP:
         X = np.array(X)
         y = np.array(y)
 
+        # the return loss result
+        train_loss_return = []
+        train_acc_return = []
+        # the return acc result
+        test_loss_return = []
+        test_acc_return = []
+
         to_return = np.zeros(epochs)
 
         prev_time = time.time()
         for k in range(epochs):
             itr = 0
+            batch_num = X.shape[0]
+
             for batch in self.iterate_minibatches(X, y, batchsize=batchsize, shuffle=True):
 
                 X_batch, y_batch = batch
@@ -121,16 +131,33 @@ class MLP:
 
                 to_return[k] = np.mean(loss)
 
-                if itr % 100 == 0:
+                # at the end of each epoch
+                if itr % batch_num == 0:
+                    # get the predict result
                     pred = np.argmax(y_hat, axis=1)
-                    print("{}. loss: {}, reg_loss: {}, accuracy:{}".format(k, to_return[k], reg_loss, np.mean(pred == y_batch)))
-                    self.predict(data_val, y_val)
+                    acc = np.mean(pred == y_batch)
+                    # record training result
+                    train_acc_return.append(acc)
+                    train_loss_return.append(loss)
+                    # print the result of the last batch at iteration
+                    print("Epoch: {}\nTraining\tloss:\t{:0.10f}\t\tacc:\t{:0.2f}%".format(k + 1,
+                                                                                         loss,
+                                                                                         np.mean(pred == y_batch) * 100
+                                                                                         ))
+                    # print the result of the testing
+                    tloss, tacc = self.predict(data_val, y_val)
+                    # record testing result
+                    test_loss_return.append(tloss)
+                    test_acc_return.append(tacc)
 
                 itr += 1
 
         return to_return
 
     def predict(self, input, y):
-        score = self.forward(input, test_mode=True)
+        score = self.forward(input)
+        loss, delta, _ = self.cross_entropy(y, score)
         pred = np.argmax(score, axis=1)
-        print("testing accuracy: {}".format(np.mean(pred == y)))
+        acc = np.mean(pred == y)
+        print("Testing\t\tloss:\t{:0.10f}\t\tacc:\t{:0.2f}%".format(loss, acc * 100))
+        return loss, acc

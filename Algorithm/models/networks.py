@@ -15,6 +15,10 @@ class MLP:
         :param activation: The activation function to be used. Can be
         "logistic" or "tanh"
         """
+
+        if norm == "bn" and update_type == "nes_momentum":
+            raise Exception("The Batch Normalization with Nesterov Momentum is not supported for this application.")
+
         ### initialize layers
         self.layers = []
         self.params = []

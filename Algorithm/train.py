@@ -15,7 +15,7 @@ X_val = data.training_val - mean / std
 batch_size = 200
 max_epoch = 500
 
-nn = MLP([128, 512, 64, 10], dropouts=[0.5, 0.1, -1], activation='relu', norm="wn", update_type="nes_momentum")
+nn = MLP([128, 512, 64, 10], dropouts=[0.5, 0.1, -1], activation='relu', norm="bn", update_type="nes_momentum")
 train_acc, train_loss, test_acc, test_loss = nn.fit(X_train, data.label_dev, X_val, data.label_val, my=0.95,
                                                     learning_rate=1e-4,
                                                     epochs=500, batchsize=batch_size)

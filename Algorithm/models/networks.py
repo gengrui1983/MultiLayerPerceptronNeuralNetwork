@@ -156,7 +156,7 @@ class MLP:
 
                 itr += 1
 
-        return to_return
+        return train_acc_return, train_loss_return, test_acc_return, test_loss_return
 
     def predict(self, input, y):
         score = self.forward(input)

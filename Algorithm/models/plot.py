@@ -16,7 +16,7 @@ class Plot:
         # x_index_train=np.arange(0.0, epoch, 1.0 / num_of_batch)
         print(len(self.test_loss), len(x_index_test))
         # ploting the loss
-        prefix = "_{}" if self.name_prefix is not None else ""
+        prefix = "_{}".format(self.name_prefix) if self.name_prefix is not None else ""
 
         plt.figure(1)
         plt.plot(x_index_test, self.train_loss)

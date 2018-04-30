@@ -133,8 +133,6 @@ class MLP:
                 self.backward(delta)
                 self.update(my, learning_rate)
 
-                to_return[k] = np.mean(loss)
-
                 # at the end of each epoch
                 if itr % batch_num == 0:
                     # get the predict result
@@ -155,6 +153,7 @@ class MLP:
                     test_acc_return.append(tacc)
 
                 itr += 1
+                self.dropout_masks.clear()
 
         return train_acc_return, train_loss_return, test_acc_return, test_loss_return
 

@@ -1,10 +1,14 @@
 import csv
+import h5py
 
 from data_loader import data_loader
 from models.networks import MLP
 import numpy as np
 
 from models.plot import Plot
+import timeit
+
+t1 = timeit.default_timer()
 
 data = data_loader.DataLoader(False).load_data()
 
@@ -13,14 +17,19 @@ std = np.std(data.training_dev, axis=0)
 
 X_train = data.training_dev - mean / std
 X_val = data.training_val - mean / std
+X_test = data.testing - mean / std
 
 batch_size = 200
 max_epoch = 300
 
-nn = MLP([128, 512, 64, 10], dropouts=[0.5, 0.1, -1], activation='relu', norm="wn", update_type="nes_momentum")
+nn = MLP([128, 512, 64, 10], dropouts=[0.5, 0.1, -1], activation='relu', norm="wn", update_type="momentum")
 train_acc, train_loss, test_acc, test_loss = nn.fit(X_train, data.label_dev, X_val, data.label_val, my=0.95,
                                                     learning_rate=1e-4,
                                                     epochs=max_epoch, batchsize=batch_size)
+_, output = nn.predict(X_test)
+
+with h5py.File('../Output/Predicted_labels.h5', 'w') as hf:
+    hf.create_dataset("label",  data=output)
 
 prefix = 'layer_3'
 f = open('results_{}.csv'.format(prefix), "w")
@@ -39,3 +48,7 @@ f.close()
 
 plt = Plot(max_epoch, train_acc, train_loss, test_acc, test_loss, prefix=prefix)
 plt.plot()
+
+t2 = timeit.default_timer()
+
+print("running time is: {}".format(t2 - t1))

@@ -6,6 +6,7 @@ class DataLoader:
     def __init__(self, is_dev=False):
         training = self._open_h5_('../Input/train_128.h5', 'data')
         label = self._open_h5_('../Input/train_label.h5', 'label')
+        testing = self._open_h5_('../Input/test_128.h5', 'data')
 
         n = np.random.np.random.randint(0, len(label), 60000)
         i = 40000
@@ -14,6 +15,7 @@ class DataLoader:
         self.label_dev = label[n[:i]]
         self.training_val = training[n[i:], :]
         self.label_val = label[n[i:]]
+        self.testing = testing
 
         if is_dev:
             n = np.random.randint(0, len(self.label), 1000)

@@ -4,14 +4,18 @@ import numpy as np
 
 class DataLoader:
     def __init__(self, is_dev=False):
+        """A function to load the data file"""
+        # open the training data and label
         training = self._open_h5_('/Users/chenjialu/Desktop/DL_Assignment1/Assignment-1-Dataset/train_128.h5', 'data')
         label = self._open_h5_('/Users/chenjialu/Desktop/DL_Assignment1/Assignment-1-Dataset/train_label.h5', 'label')
 
         n = np.random.np.random.randint(0, len(label), 60000)
         i = 40000
 
+        # get training data
         self.training_dev = training[n[:i], :]
         self.label_dev = label[n[:i]]
+        # get validation data
         self.training_val = training[n[i:], :]
         self.label_val = label[n[i:]]
 

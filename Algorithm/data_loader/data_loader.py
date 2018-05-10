@@ -4,8 +4,8 @@ import numpy as np
 
 class DataLoader:
     def __init__(self, is_dev=False):
-        training = self._open_h5_('../Input/train_128.h5', 'data')
-        label = self._open_h5_('../Input/train_label.h5', 'label')
+        training = self._open_h5_('/Users/chenjialu/Desktop/DL_Assignment1/Assignment-1-Dataset/train_128.h5', 'data')
+        label = self._open_h5_('/Users/chenjialu/Desktop/DL_Assignment1/Assignment-1-Dataset/train_label.h5', 'label')
 
         n = np.random.np.random.randint(0, len(label), 60000)
         i = 40000

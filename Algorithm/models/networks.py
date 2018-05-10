@@ -5,15 +5,33 @@ import time
 
 
 class MLP:
-    """
-    """
 
     def __init__(self, layers, dropouts, activation='tanh', norm=None, update_type=None):
         """
+        MLP is a class to create a multiple layers neural network.
+
+        :type layers: [int]
         :param layers: A list containing the number of units in each layer.
         Should be at least two values
-        :param activation: The activation function to be used. Can be
-        "logistic" or "tanh"
+
+        :type dropouts: float
+        :param dropouts: The activation function to be used. Can be
+
+        :type activation: string
+        :param activation: Non linearity to be applied in the hidden
+                           layer, defaults to relu
+
+        :type norm: string
+        :param norm: normalisation module to be applied
+        if norm = 'bn', MLP is run with batch normalisation;
+        if norm = 'wn', MLP is run with weight normalisation;
+        Otherwise run without batch normalisation and weight normalisation
+
+        :type update_type: float
+        :param update_type: the method used to update the parameters
+        if update_type = "momentum", use momentum update
+        if update_type = "nes_momentum", Nesterov Momentum
+        if update_type = None, just update with a small fraction of the derivatives
         """
 
         if norm == "bn" and update_type == "nes_momentum":
@@ -25,7 +43,7 @@ class MLP:
         self.epsilon = 1e-10
         self.dropout_masks = []
         self.dropouts = []
-
+        # activation function
         self.activation = activation
         for i in range(len(layers) - 1):
             self.layers.append(HiddenLayer(layers[i], layers[i + 1], activation=activation,
@@ -34,20 +52,36 @@ class MLP:
                                            is_last=(i == len(layers) - 2)))
 
     def forward(self, input, test_mode=False):
+        '''
+        A function to run forward procedure for all layers
+
+        :type input: numpy.array
+        :param input: a symbolic tensor of shape (n_in,)
+
+        '''
+        # for each layer
         for i in range(len(self.layers)):
             layer = self.layers[i]
+            # run a forward process
             output = layer.forward(input)
-
             if not test_mode:
+                # perform dropout
                 if i != len(self.layers) - 1 and layer.dropout_p != -1:
                     mask = layer.dropout(output)
                     output *= mask
                     self.dropout_masks.append(mask)
-
             input = output
         return output
 
     def backward(self, delta):
+        """
+        A function to run backward procedure for all layers
+
+        :type delta: numpy.array
+        :param delta: the derivatives return back to the layers
+
+        """
+        # for each layer (reverse the order)
         for i in reversed(range(len(self.layers))):
             delta = self.layers[i].backward(
                 delta,
@@ -58,11 +92,19 @@ class MLP:
                 delta *= self.dropout_masks[i - 1]
 
     def __softmax(self, x):
+        """
+        softmax function
+
+        :type x: np.array
+        :param x: input
+
+        :return: the softmax transformation of the input
+        """
         exps = np.exp(x - np.max(x, axis=1, keepdims=True))
         return exps / (np.sum(exps, axis=1, keepdims=True))
 
     def cross_entropy(self, y, y_hat):
-
+        #transform the predicted y with softmax function
         probs = self.__softmax(y_hat)
 
         m = y_hat.shape[0]
@@ -83,10 +125,37 @@ class MLP:
         return loss, delta_, reg_loss
 
     def update(self, my, lr):
+        """
+        A function to update the parameters for all layers
+
+        :type my: float
+        :param my: an additional hyperparameter for momentum update
+
+        :type lr: float
+        :param lr: the learning rate of the model, is the step size of a parameter update
+
+        """
         for layer in self.layers:
             layer.update(my, lr)
 
     def iterate_minibatches(self, inputs, y, batchsize, shuffle=False):
+        """
+        A function to create all the minibatches
+
+        :type inputs: np.arrays
+        :param inputs: the data input
+
+        :type y: np.arrays
+        :param y: the actual classes
+
+        :type batchsize: int
+        :param batchsize: the size of the batch
+
+        :type shuffle: bool
+        :param shuffle: whether to shuffle the data or not
+
+        :return: a list of each mini-batch, each batch is a list of the input data and the actuall classes
+        """
         if shuffle:
             indices = np.arange(inputs.shape[0])
             np.random.shuffle(indices)
@@ -99,11 +168,36 @@ class MLP:
 
     def fit(self, X, y, data_val, y_val, learning_rate=0.1, my=0.9, epochs=100, batchsize=1000):
         """
-        Online learning.
-        :param X: Input data or features
-        :param y: Input targets
-        :param learning_rate: parameters defining the speed of learning
+        A function to run the training process.
+
+        :type X: np.array
+        :param X: Input data or features for training
+
+        :type y: np.array
+        :param y: Input targets for training
+
+        :type data_val: np.array
+        :param data_val: Input data or features for validation
+
+        :type y_val: np.array
+        :param y_val: Input targets for validation
+
+        :type my: float
+        :param my: an additional hyperparameter for momentum update
+
+        :type learning_rate: float
+        :param learning_rate: the learning rate of the model, is the step size of a parameter update
+
+        :type batchsize: int
+        :param batchsize: the size of the batch
+
+        :type epochs: int
         :param epochs: number of times the dataset is presented to the network for learning
+
+        :return: a list of training accuracy of all epochs,
+        a list of training loss of all epochs,
+        a list of testing accuracy of all epochs,
+        a list of testing loss of all epochs
         """
         X = np.array(X)
         y = np.array(y)
@@ -121,16 +215,17 @@ class MLP:
         for k in range(epochs):
             itr = 0
             batch_num = X.shape[0]
-
+            # for each mini batch
             for batch in self.iterate_minibatches(X, y, batchsize=batchsize, shuffle=True):
-
+                # get the training input data and the target y
                 X_batch, y_batch = batch
-
+                # run forward procedure
                 y_hat = self.forward(X_batch)
-
+                # calculate loss and the derivatives to pass to the layers
                 loss, delta, reg_loss = self.cross_entropy(y_batch, y_hat)
-
+                # run backward procedure
                 self.backward(delta)
+                # update parameters
                 self.update(my, learning_rate)
 
                 # at the end of each epoch
@@ -158,9 +253,23 @@ class MLP:
         return train_acc_return, train_loss_return, test_acc_return, test_loss_return
 
     def predict(self, input, y):
+        """
+        A function to make prediction.
+        :type X: np.array
+        :param X: Input data or features for prediction
+
+        :type y: np.array
+        :param y: Input targets to be compared with the prediction
+
+        :return: the accuracy and loss of the prediction
+        """
+        # get the prediction probabilites
         score = self.forward(input)
+        # calculate the loss
         loss, delta, _ = self.cross_entropy(y, score)
+        # get the predicted y
         pred = np.argmax(score, axis=1)
+        # calculate accuracy
         acc = np.mean(pred == y)
         print("Testing\t\tloss:\t{:0.10f}\t\tacc:\t{:0.2f}%".format(loss, acc * 100))
         return loss, acc

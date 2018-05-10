@@ -1,9 +1,9 @@
-from data_loader import data_loader
+from Algorithm.data_loader import data_loader
 from collections import Counter
-from models.networks import MLP
+from Algorithm.models.networks import MLP
 import matplotlib.pyplot as plt
 import numpy as np
-from models import networksBN
+from Algorithm.models import networksBN
 
 
 
@@ -108,23 +108,9 @@ def trainBN(layers, dropouts, my, lr, epoch, batchsize):
     return train_acc, train_loss, test_acc, test_loss
 
 # train a batch normalisation nerual network
-train_acc_bn, train_loss_bn, test_acc_bn, test_loss_bn= trainBN(layers=[128, 64, 32, 10], dropouts=[0.1, 0.1, -1], my=0.95, lr=1e-2, epoch=600, batchsize=256)
+train_acc_bn, train_loss_bn, test_acc_bn, test_loss_bn= trainBN(layers=[128, 64, 32, 10], dropouts=[0.1, 0.1, -1], my=0.95, lr=1e-3, epoch=300, batchsize=256)
 
 
-
-
-
-
-
-
-
-#def trainWplot()
-
-
-#batchNor
-#nn_bn = MLP_bn([128, 32, 32, 32, 32, 10], dropouts=[0.5, 0.5, 0.5, 0.5, 0.5], activation='relu')
-#loss_bn = nn_bn.fit(X, data.label_dev, data.training_val, data.label_val, my=0.95, learning_rate=0.1, epochs=5000)
-#print("loss: {}".format(loss_bn))
 
 
 

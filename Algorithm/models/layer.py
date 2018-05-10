@@ -5,16 +5,15 @@ from .weight_init import WeightInit
 
 
 class HiddenLayer(object):
+
     def __init__(self, n_in, n_out, is_last=False,
-                 activation='tanh', norm=None, dropout=0.5, update_type=None):
+                 activation='relu', norm=None, dropout=0.5, update_type=None):
         """
-        Typical hidden layer of a MLP: units are fully-connected and have
-        sigmoidal activation function. Weight matrix W is of shape (n_in,n_out)
+        A class to create a hidden layer of a MLP: units are fully-connected and have
+        activation function. Weight matrix W is of shape (n_in,n_out)
         and the bias vector b is of shape (n_out,).
 
-        NOTE : The nonlinearity used here is tanh
-
-        Hidden unit activation is given by: tanh(dot(input,W) + b)
+        The output of the layer is given by: Activation(dot(input,W) + b)
 
         :type n_in: int
         :param n_in: dimensionality of input
@@ -24,7 +23,23 @@ class HiddenLayer(object):
 
         :type activation: string
         :param activation: Non linearity to be applied in the hidden
-                           layer
+                           layer, defaults to relu
+
+        :type norm: string
+        :param norm: normalisation module to be applied
+        if norm = 'bn', MLP is run with batch normalisation;
+        if norm = 'wn', MLP is run with weight normalisation;
+        Otherwise run without batch normalisation and weight normalisation
+
+        :type dropout: float
+        :param dropout: the dropout rate of a hidden layer, defaults to 0.5
+
+        :type update_type: float
+        :param update_type: the method used to update the parameters
+        if update_type = "momentum", use momentum update
+        if update_type = "nes_momentum", Nesterov Momentum
+        if update_type = None, just update with a small fraction of the derivatives
+
         """
         self.n_in = n_in
         self.n_out = n_out
@@ -71,10 +86,14 @@ class HiddenLayer(object):
 
     def forward(self, input):
         '''
+        A function to run a forward process
+
         :type input: numpy.array
         :param input: a symbolic tensor of shape (n_in,)
-        '''
 
+        :return: the layer output
+        '''
+        # if run with weight normalisation
         if self.norm == "wn":
             if self.is_init:
                 # Rescale the weights and bias by calculating the mean and std of the linear net output.
@@ -94,11 +113,12 @@ class HiddenLayer(object):
                 t = np.dot(input, self.V)
                 scalar = self.g_wn / LA.norm(self.V, axis=0)
                 lin_output = np.reshape(scalar, [1, self.n_out]) * t + np.reshape(self.b_wn, [1, self.n_out])
-
+        # if run with batch normalisation
         elif self.norm == "bn":
+            # initialize beta at the first iteration
             if self.beta is None:
                 self.beta = np.zeros((self.n_out,))
-
+            # initialize gamma at the first iteration
             if self.gamma is None:
                 self.gamma = np.ones((self.n_out,))
 
@@ -120,14 +140,28 @@ class HiddenLayer(object):
             lin_output if self.activation is None or self.is_last
             else self.activation(lin_output)
         )
-
+        # store input
         self.input = input
+        # return output
         return self.output
 
     def _get_weight(self):
+        """a function to get the normalised weights"""
         return self.g_wn / LA.norm(self.V, axis=0) * self.V
 
     def backward(self, delta, prev_layer=None):
+        """
+        A function to run a backward procedure
+
+        :type delta: numpy.array
+        :param delta: the derivatives return back to the layer
+
+        :type prev_layer: HiddenLayer
+        :param prev_layer: the previous hidden layer
+
+        :return: the delta (derivatives) pass to the next layer
+
+        """
         self.grad_W = np.atleast_2d(self.input).T.dot(np.atleast_2d(delta))
         self.grad_b = np.sum(delta, axis=0, keepdims=True)
 
@@ -166,6 +200,15 @@ class HiddenLayer(object):
         return delta_
 
     def dropout(self, input, rng=None):
+        """a function to run the dropout module
+
+        :type input: numpy.array
+        :param input: the layer input
+
+        :type rng: np.random.RandomState
+        :param rng: the randomstate to run dropout
+
+        """
         if rng is None:
             rng = np.random.RandomState(None)
 
@@ -173,6 +216,15 @@ class HiddenLayer(object):
         return mask
 
     def update(self, my, lr):
+        """
+        A function to update the parameter
+
+        :type my: float
+        :param my: an additional hyperparameter for momentum update
+
+        :type lr: float
+        :param lr: the learning rate of the model, is the step size of a parameter update
+        """
         if self.update_type == "nes_momentum":
             prev_v = self.velocity
 

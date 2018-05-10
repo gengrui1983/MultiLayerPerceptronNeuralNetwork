@@ -34,7 +34,7 @@ class HiddenLayer(object):
         :type dropout: float
         :param dropout: the dropout rate of a hidden layer, defaults to 0.5
 
-        :type update_type: float
+        :type update_type: string
         :param update_type: the method used to update the parameters
         if update_type = "momentum", use momentum update
         if update_type = "nes_momentum", Nesterov Momentum
@@ -206,7 +206,7 @@ class HiddenLayer(object):
         :param input: the layer input
 
         :type rng: np.random.RandomState
-        :param rng: the randomstate to run dropout
+        :param rng: the random state to run dropout
 
         """
         if rng is None:

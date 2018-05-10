@@ -34,7 +34,6 @@ class Plot:
 
     def plot(self):
         x_index_test = np.arange(1.0, self.epoch + 1)
-        # x_index_train=np.arange(0.0, epoch, 1.0 / num_of_batch)
         print(len(self.test_loss), len(x_index_test))
 
         # ploting the loss

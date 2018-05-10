@@ -37,14 +37,12 @@ class Activation(object):
         return np.tanh(x)
 
     def __tanh_deriv(self, a):
-        # a = np.tanh(x)
         return 1.0 - a ** 2
 
     def __logistic(self, x):
         return 1.0 / (1.0 + np.exp(-x))
 
     def __logistic_derivative(self, a):
-        # a = logistic(x)
         return a * (1 - a)
 
     def __relu(self, x):

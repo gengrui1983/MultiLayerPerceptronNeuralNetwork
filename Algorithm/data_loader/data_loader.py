@@ -6,8 +6,9 @@ class DataLoader:
     def __init__(self, is_dev=False):
         """A function to load the data file"""
         # open the training data and label
-        training = self._open_h5_('/Users/chenjialu/Desktop/DL_Assignment1/Assignment-1-Dataset/train_128.h5', 'data')
-        label = self._open_h5_('/Users/chenjialu/Desktop/DL_Assignment1/Assignment-1-Dataset/train_label.h5', 'label')
+        training = self._open_h5_('../Input/train_128.h5', 'data')
+        label = self._open_h5_('../Input/train_label.h5', 'label')
+        testing = self._open_h5_('../Input/test_128.h5', 'data')
 
         n = np.random.np.random.randint(0, len(label), 60000)
         i = 40000
@@ -18,6 +19,7 @@ class DataLoader:
         # get validation data
         self.training_val = training[n[i:], :]
         self.label_val = label[n[i:]]
+        self.testing = testing
 
         if is_dev:
             n = np.random.randint(0, len(self.label), 1000)

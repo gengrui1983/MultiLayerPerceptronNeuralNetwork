@@ -14,7 +14,7 @@ class MLP:
         :param layers: A list containing the number of units in each layer.
         Should be at least two values
 
-        :type dropouts: float
+        :type dropouts: [int]
         :param dropouts: The activation function to be used. Can be
 
         :type activation: string
@@ -27,7 +27,7 @@ class MLP:
         if norm = 'wn', MLP is run with weight normalisation;
         Otherwise run without batch normalisation and weight normalisation
 
-        :type update_type: float
+        :type update_type: string
         :param update_type: the method used to update the parameters
         if update_type = "momentum", use momentum update
         if update_type = "nes_momentum", Nesterov Momentum
@@ -242,7 +242,7 @@ class MLP:
                                                                                          np.mean(pred == y_batch) * 100
                                                                                          ))
                     # print the result of the testing
-                    tloss, tacc = self.predict(data_val, y_val)
+                    tloss, tacc = self.evaluate(data_val, y_val)
                     # record testing result
                     test_loss_return.append(tloss)
                     test_acc_return.append(tacc)
@@ -252,7 +252,7 @@ class MLP:
 
         return train_acc_return, train_loss_return, test_acc_return, test_loss_return
 
-    def predict(self, input, y):
+    def predict(self, input):
         """
         A function to make prediction.
         :type X: np.array
@@ -263,13 +263,13 @@ class MLP:
 
         :return: the accuracy and loss of the prediction
         """
-        # get the prediction probabilites
         score = self.forward(input)
-        # calculate the loss
-        loss, delta, _ = self.cross_entropy(y, score)
-        # get the predicted y
         pred = np.argmax(score, axis=1)
-        # calculate accuracy
+        return score, pred
+
+    def evaluate(self, pred, y):
+        score, pred = self.predict(pred)
+        loss, delta, _ = self.cross_entropy(y, score)
         acc = np.mean(pred == y)
         print("Testing\t\tloss:\t{:0.10f}\t\tacc:\t{:0.2f}%".format(loss, acc * 100))
         return loss, acc
